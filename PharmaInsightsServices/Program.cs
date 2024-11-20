@@ -13,9 +13,23 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     ));
 builder.Services.AddScoped<IProductService, ProductService>();
 
+// Register CORS
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Order matters: Use CORS before MapControllers
+app.UseCors();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
