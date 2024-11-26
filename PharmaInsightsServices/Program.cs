@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PharmaInsightsServices.Data;
-using PharmaInsightsServices.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +11,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         new MySqlServerVersion(new Version(8, 0, 31))
     ));
 builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IPharmacyService, PharmacyService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IInventoryService, InventoryService>();
 
 // Register CORS
 builder.Services.AddCors(options =>
