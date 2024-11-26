@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PharmaInsightsServices.Data;
+using OfficeOpenXml;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,10 +29,15 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Order matters: Use CORS before MapControllers
+// Configurar EPPlus LicenseContext
+ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+// Orden de middlewares
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapControllers();
+app.UseStaticFiles();
+app.UseRouting();
 
+app.MapControllers();
 app.Run();
