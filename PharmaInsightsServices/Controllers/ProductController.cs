@@ -63,6 +63,7 @@ public class ProductController : ControllerBase
         // Map entities to DTOs
         var productDtos = products.Select(p => new ProductDto
         {
+            ProductId = p.ProductId,
             Name = p.Name,
             Description = p.Description,
             Price = p.Price
