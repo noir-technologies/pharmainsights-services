@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using PharmaInsightsServices.DTOs;
 using PharmaInsightsServices.Models;
-using OfficeOpenXml;
+
 
 namespace PharmaInsightsServices.Controllers;
 
@@ -16,12 +16,10 @@ public class InventoryController : ControllerBase
         _inventoryService = inventoryService;
     }
 
-    // Endpoint para subir y leer datos de un archivo Excel
-    [HttpPost("read-excel")]
+    [HttpPost("import")]
     [Consumes("multipart/form-data")]
-    public async Task<IActionResult> ReadExcel([FromForm] IFormFile file)
+    public async Task<IActionResult> ImportInventory([FromForm] IFormFile file)
     {
-        
         if (file == null || file.Length == 0)
             return BadRequest("No file uploaded.");
 
@@ -30,37 +28,30 @@ public class InventoryController : ControllerBase
         if (!supportedTypes.Contains(fileExtension))
             return BadRequest("Invalid file type. Only Excel files are allowed.");
 
-        var inventoryList = new List<InventoryDto>();
-
-        using (var stream = new MemoryStream())
+        try
         {
-            await file.CopyToAsync(stream);
-            stream.Position = 0;
+            var result = await _inventoryService.ImportInventoryAsync(file);
 
-            using (var package = new ExcelPackage(stream))
+            if (result.Errors.Count > 0)
             {
-                var worksheet = package.Workbook.Worksheets[0]; // Leer la primera hoja
-                var rowCount = worksheet.Dimension.Rows;
-
-                for (int row = 2; row <= rowCount; row++) // Asumiendo que la fila 1 tiene encabezados
+                return BadRequest(new
                 {
-                    Console.WriteLine($"Reading row {row}...");
-                    var pharmacyId = int.Parse(worksheet.Cells[row, 1].Text.Trim());
-                    var productId = int.Parse(worksheet.Cells[row, 2].Text.Trim());
-                    var quantity = int.Parse(worksheet.Cells[row, 3].Text.Trim());
-
-                    inventoryList.Add(new InventoryDto
-                    {
-                        PharmacyId = pharmacyId,
-                        ProductId = productId,
-                        Quantity = quantity
-                    });
-                }
-
+                    Message = "Some rows failed to import.",
+                    Errors = result.Errors
+                });
             }
-        }
 
-        return Ok(inventoryList); // Retorna los datos leídos como JSON
+            return Ok(new
+            {
+                Message = "Inventory imported successfully.",
+                ImportedCount = result.ImportedCount
+            });
+        }
+        catch (Exception ex)
+        {
+            // Log the exception (you can use a logging library)
+            return StatusCode(500, $"An error occurred: {ex.Message}");
+        }
     }
 
     [HttpGet]
