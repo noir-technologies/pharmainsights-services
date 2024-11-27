@@ -24,7 +24,6 @@ public class PharmacyController : ControllerBase
         return Ok(pharmacies);
     }
 
-    [Authorize]
     [HttpPost]
     public async Task<IActionResult> AddPharmacy([FromBody] PharmacyDto pharmacyDto)
     {
