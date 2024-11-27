@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using OfficeOpenXml;
 using PharmaInsightsServices.Data;
 using PharmaInsightsServices.Helpers;
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -38,6 +39,8 @@ builder.Services.AddCors(options =>
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey is missing in configuration.");
+var issuer = jwtSettings["Issuer"] ?? throw new InvalidOperationException("JWT Issuer is missing in configuration.");
+var audience = jwtSettings["Audience"] ?? throw new InvalidOperationException("JWT Audience is missing in configuration.");
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -51,11 +54,27 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtSettings["Issuer"],
-        ValidAudience = jwtSettings["Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
+        ValidIssuer = issuer,
+        ValidAudience = audience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
+        NameClaimType = JwtRegisteredClaimNames.Sub,
+    };
+    
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            Console.WriteLine("Authentication failed: " + context.Exception.Message);
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            Console.WriteLine("Token validated successfully");
+            return Task.CompletedTask;
+        }
     };
 });
+
 
 // Add logging
 builder.Services.AddLogging(config =>
