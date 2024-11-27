@@ -2,6 +2,7 @@ using PharmaInsightsServices.Data;
 using PharmaInsightsServices.Models;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
+using PharmaInsightsServices.DTOs;
 
 public class InventoryService : IInventoryService
 {
@@ -124,4 +125,22 @@ public class InventoryService : IInventoryService
         return pharmacyExists && productExists;
     }
 
+        // Resumen agrupado por farmacia y producto
+    public async Task<IEnumerable<ProductInventorySummaryDto>> GetSummaryByPharmacyAndProductAsync()
+    {
+        return await _context.Inventory
+            .Include(i => i.Pharmacy) // Incluye información de la farmacia
+            .Include(i => i.Product) // Incluye información del producto
+            .GroupBy(i => new { i.Pharmacy.PharmacyId, PharmacyName = i.Pharmacy.Name, i.Product.ProductId, ProductName = i.Product.Name, i.Product.Price}) // Agrupa por farmacia y producto
+            .Select(g => new ProductInventorySummaryDto
+            {
+                PharmacyId = g.Key.PharmacyId,
+                PharmacyName = g.Key.PharmacyName,
+                ProductId = g.Key.ProductId,
+                ProductName = g.Key.ProductName,
+                Price = g.Key.Price,
+                TotalUnits = g.Sum(i => i.Quantity)
+            })
+            .ToListAsync();
+    }
 }

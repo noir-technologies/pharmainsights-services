@@ -119,4 +119,12 @@ public class InventoryController : ControllerBase
 
         return NoContent();
     }
+
+        // Endpoint para obtener resúmenes por farmacia y producto
+    [HttpGet("summary-by-pharmacy-product")]
+    public async Task<IActionResult> GetSummaryByPharmacyAndProduct()
+    {
+        var summaries = await _inventoryService.GetSummaryByPharmacyAndProductAsync();
+        return Ok(summaries);
+    }
 }
