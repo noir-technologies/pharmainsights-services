@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using PharmaInsightsServices.DTOs;
 using PharmaInsightsServices.Models;
 
-
 namespace PharmaInsightsServices.Controllers;
 
 [ApiController]
@@ -51,7 +50,6 @@ public class InventoryController : ControllerBase
         }
         catch (Exception ex)
         {
-            // Log the exception (you can use a logging library)
             return StatusCode(500, $"An error occurred: {ex.Message}");
         }
     }
@@ -61,13 +59,16 @@ public class InventoryController : ControllerBase
     public async Task<IActionResult> GetAll()
     {
         var inventories = await _inventoryService.GetAllAsync();
-        
+
         // Map entities to DTOs
         var inventoryDtos = inventories.Select(i => new InventoryDto
         {
             PharmacyId = i.PharmacyId,
             ProductId = i.ProductId,
-            Quantity = i.Quantity
+            QuantityEntered = i.QuantityEntered,
+            QuantitySold = i.QuantitySold,
+            EntryDate = i.EntryDate,
+            SaleDate = i.SaleDate
         });
 
         return Ok(inventoryDtos);
@@ -84,13 +85,16 @@ public class InventoryController : ControllerBase
         {
             PharmacyId = inventoryDto.PharmacyId,
             ProductId = inventoryDto.ProductId,
-            Quantity = inventoryDto.Quantity
+            QuantityEntered = inventoryDto.QuantityEntered,
+            QuantitySold = inventoryDto.QuantitySold,
+            EntryDate = inventoryDto.EntryDate,
+            SaleDate = inventoryDto.SaleDate
         };
 
         await _inventoryService.AddInventoryAsync(inventory);
         return CreatedAtAction(nameof(GetAll), new { inventory_id = inventory.InventoryId }, inventory);
     }
-    
+
     [Authorize]
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateInventory(int id, [FromBody] InventoryDto inventoryDto)
@@ -103,7 +107,10 @@ public class InventoryController : ControllerBase
             InventoryId = id,
             PharmacyId = inventoryDto.PharmacyId,
             ProductId = inventoryDto.ProductId,
-            Quantity = inventoryDto.Quantity
+            QuantityEntered = inventoryDto.QuantityEntered,
+            QuantitySold = inventoryDto.QuantitySold,
+            EntryDate = inventoryDto.EntryDate,
+            SaleDate = inventoryDto.SaleDate
         };
 
         var result = await _inventoryService.UpdateInventoryAsync(id, updatedInventory);

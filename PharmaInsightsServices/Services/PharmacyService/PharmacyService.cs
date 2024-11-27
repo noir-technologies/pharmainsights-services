@@ -15,6 +15,11 @@ public class PharmacyService : IPharmacyService
     {
         return await _context.Pharmacy.ToListAsync();
     }
+    
+    public async Task<Pharmacy?> GetByIdAsync(int id)
+    {
+        return await _context.Pharmacy.FirstOrDefaultAsync(p => p.PharmacyId == id);
+    }
 
     public async Task AddPharmacyAsync(Pharmacy pharmacy)
     {
