@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PharmaInsightsServices.DTOs;
 using PharmaInsightsServices.Models;
@@ -15,6 +16,7 @@ public class PharmacyController : ControllerBase
         _pharmacyService = pharmacyService;
     }
 
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
@@ -22,6 +24,7 @@ public class PharmacyController : ControllerBase
         return Ok(pharmacies);
     }
 
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> AddPharmacy([FromBody] PharmacyDto pharmacyDto)
     {
@@ -38,6 +41,7 @@ public class PharmacyController : ControllerBase
         return CreatedAtAction(nameof(GetAll), new { pharmacy_id = pharmacy.PharmacyId }, pharmacy);
     }
     
+    [Authorize]
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdatePharmacy(int id, [FromBody] PharmacyDto pharmacyDto)
     {
@@ -59,6 +63,7 @@ public class PharmacyController : ControllerBase
         return NoContent();
     }
 
+    [Authorize]
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeletePharmacy(int id)
     {
@@ -69,5 +74,4 @@ public class PharmacyController : ControllerBase
 
         return NoContent();
     }
-
 }

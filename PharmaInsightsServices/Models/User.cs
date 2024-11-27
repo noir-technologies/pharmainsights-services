@@ -1,7 +1,7 @@
+namespace PharmaInsightsServices.Models;
+
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-
-namespace PharmaInsightsServices.Models;
 
 public class User
 {
@@ -12,13 +12,18 @@ public class User
     [Required]
     [MaxLength(100)]
     [Column("name")]
-    public string Name { get; set; } = string.Empty;
+    public required string Name { get; set; }
 
     [Required]
     [MaxLength(100)]
     [Column("email")]
-    [EmailAddress]
-    public string Email { get; set; } = string.Empty;
+    public required string Email { get; set; }
+
+    [Column("password_hash")]
+    public required byte[] PasswordHash { get; set; }
+
+    [Column("password_salt")]
+    public required byte[] PasswordSalt { get; set; }
 
     [ForeignKey("Pharmacy")]
     [Column("pharmacy_id")]

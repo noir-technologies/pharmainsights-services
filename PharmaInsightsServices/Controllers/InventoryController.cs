@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PharmaInsightsServices.DTOs;
 using PharmaInsightsServices.Models;
@@ -16,6 +17,7 @@ public class InventoryController : ControllerBase
         _inventoryService = inventoryService;
     }
 
+    [Authorize]
     [HttpPost("import")]
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> ImportInventory([FromForm] IFormFile file)
@@ -54,6 +56,7 @@ public class InventoryController : ControllerBase
         }
     }
 
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
@@ -70,6 +73,7 @@ public class InventoryController : ControllerBase
         return Ok(inventoryDtos);
     }
 
+    [Authorize]
     [HttpPost]
     public async Task<IActionResult> AddInventory([FromBody] InventoryDto inventoryDto)
     {
@@ -87,6 +91,7 @@ public class InventoryController : ControllerBase
         return CreatedAtAction(nameof(GetAll), new { inventory_id = inventory.InventoryId }, inventory);
     }
     
+    [Authorize]
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateInventory(int id, [FromBody] InventoryDto inventoryDto)
     {
@@ -109,6 +114,7 @@ public class InventoryController : ControllerBase
         return NoContent();
     }
 
+    [Authorize]
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteInventory(int id)
     {
@@ -120,8 +126,8 @@ public class InventoryController : ControllerBase
         return NoContent();
     }
 
-        // Endpoint para obtener resúmenes por farmacia y producto
-    [HttpGet("summary-by-pharmacy-product")]
+    [Authorize]
+    [HttpGet("summary")]
     public async Task<IActionResult> GetSummaryByPharmacyAndProduct()
     {
         var summaries = await _inventoryService.GetSummaryByPharmacyAndProductAsync();

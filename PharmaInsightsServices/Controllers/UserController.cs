@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PharmaInsightsServices.DTOs;
 using PharmaInsightsServices.Models;
@@ -14,7 +15,8 @@ public class UserController : ControllerBase
     {
         _userService = userService;
     }
-
+    
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
@@ -30,35 +32,58 @@ public class UserController : ControllerBase
         return Ok(userDtos);
     }
 
+    [Authorize]
     [HttpPost]
-    public async Task<IActionResult> AddUser([FromBody] UserDto userDto)
+    public async Task<IActionResult> AddUser([FromBody] RegisterUserDto userDto)
     {
         if (userDto == null)
             return BadRequest("User data cannot be null.");
+
+        // Generate password hash and salt
+        _userService.CreatePasswordHash(userDto.Password, out byte[] passwordHash, out byte[] passwordSalt);
 
         var user = new User
         {
             Name = userDto.Name,
             Email = userDto.Email,
-            PharmacyId = userDto.PharmacyId
+            PharmacyId = userDto.PharmacyId,
+            PasswordHash = passwordHash,
+            PasswordSalt = passwordSalt
         };
 
         await _userService.AddUserAsync(user);
         return CreatedAtAction(nameof(GetAll), new { user_id = user.UserId }, user);
     }
     
+    [Authorize]
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateUser(int id, [FromBody] UserDto userDto)
     {
         if (userDto == null)
             return BadRequest("User data cannot be null.");
 
+        var existingUser = await _userService.GetUserByIdAsync(id);
+
+        if (existingUser == null)
+            return NotFound($"User with ID {id} not found.");
+
+        // Update password only if provided
+        byte[] passwordHash = existingUser.PasswordHash;
+        byte[] passwordSalt = existingUser.PasswordSalt;
+
+        if (!string.IsNullOrEmpty(userDto.Password))
+        {
+            _userService.CreatePasswordHash(userDto.Password, out passwordHash, out passwordSalt);
+        }
+
         var updatedUser = new User
         {
             UserId = id,
             Name = userDto.Name,
             Email = userDto.Email,
-            PharmacyId = userDto.PharmacyId
+            PharmacyId = userDto.PharmacyId,
+            PasswordHash = passwordHash,
+            PasswordSalt = passwordSalt
         };
 
         var result = await _userService.UpdateUserAsync(id, updatedUser);
@@ -69,6 +94,7 @@ public class UserController : ControllerBase
         return NoContent();
     }
 
+    [Authorize]
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteUser(int id)
     {
