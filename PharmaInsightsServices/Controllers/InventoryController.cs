@@ -63,6 +63,7 @@ public class InventoryController : ControllerBase
         // Map entities to DTOs
         var inventoryDtos = inventories.Select(i => new InventoryDto
         {
+            InventoryId = i.InventoryId,
             PharmacyId = i.PharmacyId,
             ProductId = i.ProductId,
             QuantityEntered = i.QuantityEntered,

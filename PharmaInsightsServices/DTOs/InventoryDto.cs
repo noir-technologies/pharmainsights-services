@@ -2,6 +2,7 @@ namespace PharmaInsightsServices.DTOs;
 
 public class InventoryDto
 {
+    public int InventoryId { get; set; }
     public int PharmacyId { get; set; }
     public int ProductId { get; set; }
     public int QuantityEntered { get; set; }
