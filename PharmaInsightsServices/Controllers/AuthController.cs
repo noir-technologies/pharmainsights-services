@@ -1,3 +1,6 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PharmaInsightsServices.DTOs;
 using PharmaInsightsServices.Helpers;
@@ -68,6 +71,50 @@ public class AuthController : ControllerBase
         catch (Exception ex)
         {
             return Unauthorized(new { error = ex.Message });
+        }
+    }
+    
+    [HttpGet("me")]
+    [Authorize]
+    public async Task<IActionResult> GetUserDetails()
+    {
+        try
+        {
+            // Log all claims for debugging
+            Console.WriteLine("User Claims:");
+            foreach (var claim in User.Claims)
+            {
+                Console.WriteLine($"Type: {claim.Type}, Value: {claim.Value}");
+            }
+
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+            {
+                Console.WriteLine("No 'nameidentifier' claim found");
+                return Unauthorized(new { error = "Invalid token." });
+            }
+
+            var userId = int.Parse(userIdClaim.Value);
+            var user = await _userService.GetUserByIdAsync(userId);
+
+            if (user == null)
+            {
+                Console.WriteLine("User not found for UserId: " + userId);
+                return Unauthorized(new { error = "User not found." });
+            }
+
+            return Ok(new
+            {
+                user.UserId,
+                user.Name,
+                user.Email,
+                user.PharmacyId
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error in 'me' endpoint: " + ex.Message);
+            return BadRequest(new { error = ex.Message });
         }
     }
 }
