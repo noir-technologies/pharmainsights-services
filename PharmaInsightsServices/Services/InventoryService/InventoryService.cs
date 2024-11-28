@@ -28,12 +28,20 @@ public class InventoryService : IInventoryService
 
         if (existingInventory != null)
         {
-            existingInventory.Quantity += inventory.Quantity;
+            existingInventory.QuantityEntered += inventory.QuantityEntered;
             _context.Inventory.Update(existingInventory);
         }
         else
         {
-            _context.Inventory.Add(inventory);
+            _context.Inventory.Add(new Inventory
+            {
+                PharmacyId = inventory.PharmacyId,
+                ProductId = inventory.ProductId,
+                QuantityEntered = inventory.QuantityEntered,
+                QuantitySold = inventory.QuantitySold,
+                EntryDate = inventory.EntryDate,
+                SaleDate = inventory.SaleDate
+            });
         }
 
         await _context.SaveChangesAsync();
@@ -60,13 +68,19 @@ public class InventoryService : IInventoryService
                     {
                         var pharmacyId = int.Parse(worksheet.Cells[row, 1].Text.Trim());
                         var productId = int.Parse(worksheet.Cells[row, 2].Text.Trim());
-                        var quantity = int.Parse(worksheet.Cells[row, 3].Text.Trim());
+                        var quantityEntered = int.Parse(worksheet.Cells[row, 3].Text.Trim());
+                        var quantitySold = int.Parse(worksheet.Cells[row, 4].Text.Trim());
+                        var entryDate = DateTime.Parse(worksheet.Cells[row, 5].Text.Trim());
+                        var saleDate = DateTime.Parse(worksheet.Cells[row, 6].Text.Trim());
 
                         var inventory = new Inventory
                         {
                             PharmacyId = pharmacyId,
                             ProductId = productId,
-                            Quantity = quantity
+                            QuantityEntered = quantityEntered,
+                            QuantitySold = quantitySold,
+                            EntryDate = entryDate,
+                            SaleDate = saleDate
                         };
 
                         await AddInventoryAsync(inventory);
@@ -86,7 +100,7 @@ public class InventoryService : IInventoryService
             Errors = errors
         };
     }
-    
+
     public async Task<bool> UpdateInventoryAsync(int id, Inventory updatedInventory)
     {
         var inventory = await _context.Inventory.FindAsync(id);
@@ -96,7 +110,10 @@ public class InventoryService : IInventoryService
 
         inventory.PharmacyId = updatedInventory.PharmacyId;
         inventory.ProductId = updatedInventory.ProductId;
-        inventory.Quantity = updatedInventory.Quantity;
+        inventory.QuantityEntered = updatedInventory.QuantityEntered;
+        inventory.QuantitySold = updatedInventory.QuantitySold;
+        inventory.EntryDate = updatedInventory.EntryDate;
+        inventory.SaleDate = updatedInventory.SaleDate;
 
         _context.Inventory.Update(inventory);
         await _context.SaveChangesAsync();
@@ -116,7 +133,7 @@ public class InventoryService : IInventoryService
 
         return true;
     }
-    
+
     private async Task<bool> ForeignKeysExist(int pharmacyId, int productId)
     {
         var pharmacyExists = await _context.Pharmacy.AnyAsync(p => p.PharmacyId == pharmacyId);
@@ -125,13 +142,12 @@ public class InventoryService : IInventoryService
         return pharmacyExists && productExists;
     }
 
-        // Resumen agrupado por farmacia y producto
     public async Task<IEnumerable<ProductInventorySummaryDto>> GetSummaryByPharmacyAndProductAsync()
     {
         return await _context.Inventory
             .Include(i => i.Pharmacy)
             .Include(i => i.Product)
-            .GroupBy(i => new { i.Pharmacy!.PharmacyId, PharmacyName = i.Pharmacy.Name, i.Product!.ProductId, ProductName = i.Product.Name, i.Product.Price})
+            .GroupBy(i => new { i.Pharmacy!.PharmacyId, PharmacyName = i.Pharmacy.Name, i.Product!.ProductId, ProductName = i.Product.Name, i.Product.Price })
             .Select(g => new ProductInventorySummaryDto
             {
                 PharmacyId = g.Key.PharmacyId,
@@ -139,7 +155,9 @@ public class InventoryService : IInventoryService
                 ProductId = g.Key.ProductId,
                 ProductName = g.Key.ProductName,
                 Price = g.Key.Price,
-                TotalUnits = g.Sum(i => i.Quantity)
+                TotalUnitsEntered = g.Sum(i => i.QuantityEntered),
+                TotalUnitsSold = g.Sum(i => i.QuantitySold),
+                RemainingUnits = g.Sum(i => i.QuantityEntered) - g.Sum(i => i.QuantitySold)
             })
             .ToListAsync();
     }

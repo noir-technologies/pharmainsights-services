@@ -23,6 +23,18 @@ public class PharmacyController : ControllerBase
         var pharmacies = await _pharmacyService.GetAllAsync();
         return Ok(pharmacies);
     }
+    
+    [Authorize]
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(int id)
+    {
+        var pharmacy = await _pharmacyService.GetByIdAsync(id);
+
+        if (pharmacy == null)
+            return NotFound($"Pharmacy with ID {id} not found.");
+
+        return Ok(pharmacy);
+    }
 
     [HttpPost]
     public async Task<IActionResult> AddPharmacy([FromBody] PharmacyDto pharmacyDto)

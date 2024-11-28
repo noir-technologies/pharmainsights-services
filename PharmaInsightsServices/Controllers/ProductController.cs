@@ -15,6 +15,44 @@ public class ProductController : ControllerBase
     {
         _productService = productService;
     }
+    
+    [Authorize]
+    [HttpPost("import")]
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> ImportProducts([FromForm] IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest("No file uploaded.");
+
+        var supportedTypes = new[] { ".xls", ".xlsx" };
+        var fileExtension = Path.GetExtension(file.FileName).ToLower();
+        if (!supportedTypes.Contains(fileExtension))
+            return BadRequest("Invalid file type. Only Excel files are allowed.");
+
+        try
+        {
+            var result = await _productService.ImportProductsAsync(file);
+
+            if (result.Errors.Count > 0)
+            {
+                return BadRequest(new
+                {
+                    Message = "Some rows failed to import.",
+                    Errors = result.Errors
+                });
+            }
+
+            return Ok(new
+            {
+                Message = "Products imported successfully.",
+                ImportedCount = result.ImportedCount
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An error occurred: {ex.Message}");
+        }
+    }
 
     [Authorize]
     [HttpGet]
@@ -25,6 +63,7 @@ public class ProductController : ControllerBase
         // Map entities to DTOs
         var productDtos = products.Select(p => new ProductDto
         {
+            ProductId = p.ProductId,
             Name = p.Name,
             Description = p.Description,
             Price = p.Price

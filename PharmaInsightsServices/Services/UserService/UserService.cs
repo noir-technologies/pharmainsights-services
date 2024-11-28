@@ -65,9 +65,9 @@ public class UserService : IUserService
         return true;
     }
     
-    public async Task<User?> GetUserByIdAsync(int id)
+    public async Task<User?> GetUserByIdAsync(int userId)
     {
-        return await _context.User.FirstOrDefaultAsync(u => u.UserId == id);
+        return await _context.User.FirstOrDefaultAsync(u => u.UserId == userId);
     }
 
     public async Task<User?> GetUserByEmailAsync(string email)
